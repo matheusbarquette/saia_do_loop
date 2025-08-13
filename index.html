@@ -114,22 +114,31 @@
 
     <script>
 
+        let dataTableInstance = null;
+
         function carregarRanking() {
+            // Tenta carregar do arquivo JSON, senão usa dados de exemplo
             fetch('ranking.json')
                 .then(res => {
                     if (!res.ok) throw new Error('Arquivo não encontrado');
                     return res.json();
                 })
                 .then(data => {
+                    console.log('Dados carregados do JSON:', data);
                     inicializarTabela(data);
                 })
                 .catch(error => {
-                    console.log('Error datatable:', error.message);
+                    console.log('Erro ao carregar dados do arquivo ranking.json:', error.message);
                     inicializarTabela([]);
                 });
         }
 
         function inicializarTabela(dados) {
+            if (!dados || dados.length === 0) {
+                console.log('Nenhum dado disponível');
+                return;
+            }
+
             // Ordena os dados por votos (maior para menor)
             dados.sort((a, b) => b.votos - a.votos);
             
@@ -139,10 +148,19 @@
             // Atualiza o total de projetos
             document.getElementById('total-projetos').textContent = dados.length;
             
-            // Prepara os dados para a DataTable
-            const dadosTabela = dados.map((projeto, index) => {
+            // Limpa a tabela existente se já houver uma instância
+            if (dataTableInstance) {
+                dataTableInstance.destroy();
+            }
+
+            // Limpa o tbody
+            const tbody = document.querySelector('#ranking-table tbody');
+            tbody.innerHTML = '';
+            
+            // Adiciona as linhas diretamente no HTML
+            dados.forEach((projeto, index) => {
                 const posicao = index + 1;
-                const porcentagem = maxVotos ? Math.round((projeto.votos / maxVotos) * 100) : 0;
+                const porcentagem = maxVotos > 0 ? Math.round((projeto.votos / maxVotos) * 100) : 0;
                 
                 // Define a classe do badge baseada na posição
                 let badgeClass = 'regular';
@@ -150,73 +168,86 @@
                 else if (posicao === 2) badgeClass = 'silver';
                 else if (posicao === 3) badgeClass = 'bronze';
                 
-                return [
-                    `<div class="position-badge ${badgeClass}">${posicao}</div>`,
-                    `<div class="font-semibold text-gray-900">${projeto.titulo}</div>`,
-                    `<div class="flex items-center space-x-2">
-                        <span class="font-bold text-lg text-blue-600">${projeto.votos}</span>
-                        <span class="text-sm text-gray-500">votos</span>
-                    </div>`,
-                    `<div class="w-full">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm text-gray-600">${porcentagem}%</span>
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="position-badge ${badgeClass}">${posicao}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-semibold text-gray-900">${projeto.titulo}</div>
+                        ${projeto.numero ? `<div class="text-sm text-gray-500">Projeto #${projeto.numero}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-lg text-blue-600">${projeto.votos}</span>
+                            <span class="text-sm text-gray-500">votos</span>
                         </div>
-                        <div class="barra-container">
-                            <div class="barra-progresso" style="width: ${porcentagem}%;"></div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="w-full">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm text-gray-600">${porcentagem}%</span>
+                            </div>
+                            <div class="barra-container">
+                                <div class="barra-progresso" style="width: ${porcentagem}%;"></div>
+                            </div>
                         </div>
-                    </div>`
-                ];
+                    </td>
+                `;
+                tbody.appendChild(row);
             });
 
-            // Inicializa a DataTable
-            const dataTable = new simpleDatatables.DataTable("#ranking-table", {
-                data: {
-                    headings: ["Posição", "Projeto", "Votos", "Popularidade"],
-                    data: dadosTabela
-                },
-                searchable: true,
-                sortable: true,
-                perPage: 10,
-                perPageSelect: [5, 10, 15, 20],
-                labels: {
-                    placeholder: "Buscar projetos...",
-                    searchTitle: "Buscar na tabela",
-                    pageTitle: "Página {page}",
-                    perPage: "projetos por página",
-                    noRows: "Nenhum projeto encontrado",
-                    info: "Mostrando {start} a {end} de {rows} projetos",
-                    noResults: "Nenhum resultado encontrado para sua busca"
-                },
-                classes: {
-                    active: "bg-blue-600 text-white",
-                    disabled: "opacity-50 cursor-not-allowed"
-                }
-            });
-
-            // Personaliza o estilo da DataTable após a inicialização
+            // Inicializa a DataTable com a tabela já populada
             setTimeout(() => {
-                // Estiliza o campo de busca
-                const searchInput = document.querySelector('.dataTable-input');
-                if (searchInput) {
-                    searchInput.classList.add('border-gray-300', 'rounded-lg', 'px-4', 'py-2', 'focus:ring-blue-500', 'focus:border-blue-500');
-                }
-
-                // Estiliza o seletor de itens por página
-                const perPageSelect = document.querySelector('.dataTable-selector');
-                if (perPageSelect) {
-                    perPageSelect.classList.add('border-gray-300', 'rounded-lg', 'px-3', 'py-2', 'focus:ring-blue-500', 'focus:border-blue-500');
-                }
-
-                // Estiliza os botões de paginação
-                const paginationButtons = document.querySelectorAll('.dataTable-pagination a');
-                paginationButtons.forEach(button => {
-                    button.classList.add('px-3', 'py-2', 'mx-1', 'border', 'border-gray-300', 'rounded-lg', 'hover:bg-gray-50', 'transition-colors');
+                dataTableInstance = new simpleDatatables.DataTable("#ranking-table", {
+                    searchable: true,
+                    sortable: true,
+                    perPage: 10,
+                    perPageSelect: [5, 10, 15, 20],
+                    labels: {
+                        placeholder: "Buscar projetos...",
+                        searchTitle: "Buscar na tabela",
+                        pageTitle: "Página {page}",
+                        perPage: "projetos por página",
+                        noRows: "Nenhum projeto encontrado",
+                        info: "Mostrando {start} a {end} de {rows} projetos",
+                        noResults: "Nenhum resultado encontrado para sua busca"
+                    },
+                    classes: {
+                        active: "bg-blue-600 text-white",
+                        disabled: "opacity-50 cursor-not-allowed"
+                    }
                 });
+
+                // Personaliza o estilo da DataTable após a inicialização
+                setTimeout(() => {
+                    // Estiliza o campo de busca
+                    const searchInput = document.querySelector('.dataTable-input');
+                    if (searchInput) {
+                        searchInput.classList.add('border-gray-300', 'rounded-lg', 'px-4', 'py-2', 'focus:ring-blue-500', 'focus:border-blue-500');
+                    }
+
+                    // Estiliza o seletor de itens por página
+                    const perPageSelect = document.querySelector('.dataTable-selector');
+                    if (perPageSelect) {
+                        perPageSelect.classList.add('border-gray-300', 'rounded-lg', 'px-3', 'py-2', 'focus:ring-blue-500', 'focus:border-blue-500');
+                    }
+
+                    // Estiliza os botões de paginação
+                    const paginationButtons = document.querySelectorAll('.dataTable-pagination a');
+                    paginationButtons.forEach(button => {
+                        button.classList.add('px-3', 'py-2', 'mx-1', 'border', 'border-gray-300', 'rounded-lg', 'hover:bg-gray-50', 'transition-colors');
+                    });
+                }, 200);
             }, 100);
         }
 
         // Carrega o ranking quando a página é carregada
-        document.addEventListener('DOMContentLoaded', carregarRanking);
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM carregado, iniciando carregamento do ranking...');
+            carregarRanking();
+        });
     </script>
 </body>
 </html>
