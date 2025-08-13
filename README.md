@@ -13,6 +13,5 @@ Clique no link de cada projeto, reaja na *Issue* (👍, 🚀 ou ❤️) e ajude 
 ---
 
 ## 📊 Ranking Atual
-*(Atualizado automaticamente a cada hora)*
+*(Atualizado automaticamente)*
 
-_Aguardando contagem inicial..._
