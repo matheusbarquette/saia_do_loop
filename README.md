@@ -5,14 +5,9 @@ Clique no link de cada projeto, reaja na *Issue* (👍, 🚀 ou ❤️) e ajude 
 
 ---
 
-## 📋 Lista de Projetos
-- [Projeto 1](https://github.com/SEU_USUARIO/SEU_REPOSITORIO/issues/1)
-- [Projeto 2](https://github.com/SEU_USUARIO/SEU_REPOSITORIO/issues/2)
-- [Projeto 3](https://github.com/SEU_USUARIO/SEU_REPOSITORIO/issues/3)
-
----
-
 ## 📊 Ranking Atual
-*(Atualizado automaticamente a cada hora)*
+*(Atualizado automaticamente)*
 
-_Aguardando contagem inicial..._
+1. [Projeto teste](https://github.com/matheusbarquette/saia_do_loop/issues/1) — **0 votos**
+░
+
