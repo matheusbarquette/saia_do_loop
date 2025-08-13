@@ -1,0 +1,34 @@
+name: Atualizar Ranking
+
+on:
+  schedule:
+    - cron: "0 * * * *" # A cada hora
+  workflow_dispatch:
+
+jobs:
+  update-votes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependências
+        run: npm install @octokit/rest
+
+      - name: Contar votos e atualizar README
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/contar-votos.js
+
+      - name: Commit e Push
+        run: |
+          git config user.name "matheusbarquette"
+          git config user.email "mbarquette97@gmail.com"
+          git add README.md ranking.json
+          git commit -m "Atualizar ranking"
+          git push
