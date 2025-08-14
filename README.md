@@ -1,4 +1,4 @@
-![saia_do_loop](./.github/saia_do_loop.png)
+![Logo](./.github/saia_do_loop.png)
 
 # 🏆 Votação de Projetos
 
